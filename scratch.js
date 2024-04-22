@@ -35,4 +35,22 @@ const pArr = [];
 (async () => { for (const id of ids) pArr.push( await loadPage(id) ); })();
 
 
+// child / callee / worker.js
+onmessage = async function(e) { let result = await this.fetch(e.data); postMessage(result); }
 
+// parent / main caller
+if (window.Worker) {
+  const scriptWorker = new Worker("worker.js");
+
+  ['https://www.austinfitmagazine.com/January-2024/injured-but-not-broken/', 'https://people.com/tennis-champion-nick-kyrgios-self-harm-suicidal-thoughts-8414307'].forEach(i => { i.onchange = function(i) { scriptWorker.postMessage(i);      console.log(i,'Message posted to worker');   }  })
+
+  scriptWorker.onmessage = function(e) { result.textContent = e.data; console.log('Message received from worker',e);  }
+
+
+
+
+  ifrs.contentWindow.eval(fetch('https://people.com/tennis-champion-nick-kyrgios-self-harm-suicidal-thoughts-8414307', { method: OPTIONS }).then(r=>r));
+
+  result = await fetch('https://people.com/tennis-champion-nick-kyrgios-self-harm-suicidal-thoughts-8414307').then(r=>r).then(r=>console.log(r, r.headers, r.statusText, r.status));
+
+  
