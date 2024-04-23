@@ -1,6 +1,6 @@
 const loc = document.location.host.toLowerCase().split('.');
 const tld = loc[loc.length-1];
-const hn = loc[loc.length-2] + '.' + loc[loc.length-1];
+const hn = loc[loc.length-2] + '.' + tld;
 
 const origin = document.location.origin.toLowerCase();
 const hr = document.location.href;
@@ -8,11 +8,12 @@ const pn = document.location.pathname;
 
 const nl = document.querySelectorAll('[href],[src]');
 const ifr = document.body.appendChild(document.createElement('iframe'));
-const m = new Map([[ origin, 1 ]]);
-
+const ifrs = document.body.appendChild(document.createElement('iframe'));
+const m = new Map().set(document.location.href, 0);
+// const largeMap = new Map().set(document.location.href);
+const largeMap = new Map();
 
 function normalizeUrl(url){
-    console.info('normalizeUrl: evaluating',url);
     if ( typeof url === 'object' && url.href ) return url;
     if ( url.includes('://') )
         try {
@@ -39,219 +40,120 @@ function normalizeUrl(url){
     }
 }
 
-function crawlPage(){
 
-    let currentPage = normalizeUrl(ifr.contentWindow.location).href;
+function mapPage(doc){
+    let mapLength = m.size;
+    try {
+        [...doc
+            .querySelectorAll(
+                `a[href*="${hn}" i]
+                ,a:not([href*="://"]
+                ,[href*="tel:" i]
+                ,[href*="mailto:" i])`
+            )
+        ]
+        .flat(Infinity)
+        .map( x => { if ( x.href ) return normalizeUrl(x.href).href } )
+        .filter( p => p && p.includes('/') && p !== hr && !p.includes('#') )
+        .sort()
+        .forEach(e => { if ( e && m.get(e) === undefined ) m.set(e, 0); } );
 
-    [...ifr.contentDocument?.querySelectorAll(`a[href*='${hn}' i],a:not([href*='://'],[href*='tel:' i],[href*='mailto:' i])`)].flat(Infinity).map( x => { if ( x.href ) return normalizeUrl(x.href).href } ).filter( p => p && p.includes('/') && p !== currentPage );
-    m.set(currentPage, 1);
-}
-
-async function crawlNextPage(targetPage){
-    if ( targetPage === ifr.src ) return;
-    let currentPage = ifr.src;
-    ifr.src = targetPage;
-/*
-    let p = new Promise((resolve, reject) => {
-        setTimeout(() => )
-    })
-*/
-    ifr.onload = () => { 
-        console.log(`Attempting to crawl ${ifr.src}, loc.href: ${location.href.toLowerCase()}, ifr.contentWindow.location.href: ${ifr.contentWindow.location.href.toLowerCase()}`);
-        try {
-            crawlPage();
-        } catch(e) {
-            console.error(e, new Error(`Error encountered attempting to load: ${targetPage }`));
-        }
-    };
-    ifr.onerror = () => {
-        console.error(new Error(`Error encountered attempting to load: ${targetPage}`));
+        addAllLinks(doc);
+    } catch (e) {
+        console.error( new Error(`Failure encountered during page mapping: ${e}`));
     }
-    return;
-}
-
-function mapFirstPage(){
-    [...document
-        .querySelectorAll(
-            `a[href*="${hn}" i]
-            ,a:not([href*="://"],[href*="tel:" i],[href*="mailto:" i])`
-        )
-    ]
-    .flat(Infinity)
-    .map( x => { if ( x.href ) return normalizeUrl(x.href).href } )
-    .filter( p => p && p.includes('/') && p !== hr && !p.includes('#') )
-    .sort()
-    .forEach(e => m.set( e, 0 ) );
-}
-
-
-mapFirstPage();
-/*
-for ( [ k, v ] of m.entries()) {
-    console.log(`k: ${k}, v: ${v}, loc.href: ${location.href.toLowerCase()}, ifr.contentWindow.location.href: ${ifr.contentWindow.location.href.toLowerCase()}`);
     
-    if ( !v && k && k !== hr && !k.includes('#') ) {
-        console.log(`Attempting to crawl... k: ${k}, v: ${v}, loc.href: ${location.href.toLowerCase()}, ifr.contentWindow.location.href: ${ifr.contentWindow.location.href.toLowerCase()}`);
-        crawlNextPage(k);
-    }
-    console.log('finished crawling',k);
+    m.get(doc.location.href) === 0
+    ?
+    m.set(doc.location.href, 1)
+    :
+    console.error( new Error(`Mapped page not found in map`));
+
+    return m.size - mapLength;
 }
-*/
-for ( [ k, v ] of [ ...m.entries() ].filter( ([ k, v ]) => k && !v && k !== hr && !k.includes('#') ) ) crawlNextPage(k);
 
-/* OR as forEach */
-[...m].forEach( ( [ k, v ], i ) => console.log(`i: ${i}, k: ${k}, v: ${v}`));
-/*
-[Log] i: 0, k: https://austinsportsbehavioralhealth.com, v: 1
-[Log] i: 1, k: https://austinsportsbehavioralhealth.com/consulting-services/, v: 0
-[Log] i: 2, k: https://austinsportsbehavioralhealth.com/contact/, v: 0
-[Log] i: 3, k: https://austinsportsbehavioralhealth.com/counseling-services/, v: 0
-[Log] i: 4, k: https://austinsportsbehavioralhealth.com/our-team/, v: 0
-[Log] i: 5, k: https://austinsportsbehavioralhealth.com/resources/, v: 0
-*/
-// Examples Section
-
-/**
- * Callback-based approach: Version 1
- */
-                /* srcarg *//* cbfarg */
-function loadScript(src, callback) {
-    let script = document.createElement('script');
-    script.src = src;
-                       /* cbf *//* cbearg *//* cbsarg */
-    script.onload = () => callback(null, script);
-
-                           /* cbf *//* cbearg */
-    script.onerror = () => callback(new Error(`Script load error for ${src}`));
-  
-    document.head.append(script);
-  }
-
-            /* scriptarg *//* callbackarg-inlinefunction */
-  loadScript('/my/script.js', function() {
-    // the callback runs after the script is loaded
-    newFunction(); // so now it works
-    ...
-  });
-
-
-/**
- * Callback-based approach: Version 2
- */
-  function loadScript(src, callback) {
-    let script = document.createElement('script');
-    script.src = src;
-    script.onload = () => callback(script);
-    document.head.append(script);
-  }
-  
-  loadScript('https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.2.0/lodash.js', script => {
-    alert(`Cool, the script ${script.src} is loaded`);
-    alert( _ ); // _ is a function declared in the loaded script
-  });
-
-  for page in list 
-    loadPage(page, crawlPage)
-
-/**
- * Callback-based approach: Version 3
- */
-                    /* src *//* cbf */
-  function loadScript(src, callback) {
-    let script = document.createElement('script');
-    script.src = src;
-  
-    script.onload = () => callback(null, script);
-    script.onerror = () => callback(new Error(`Script load error for ${src}`));
-  
-    document.head.append(script);
-  }
-                /* src */        /* cbf */   /* cbs */
-  loadScript('/my/script.js', function(error, script) {
-    if (error) {
-      // handle error
-    } else {
-      // script loaded successfully
+function addAllLinks(doc){
+    let linksFrom = [];
+    let linksTo = [];
+    let refs = [];
+    
+    try {
+        [...doc.querySelectorAll(`[href],[src]`)]
+        .flat(Infinity)
+        .map( x => {
+            if ( x.href ) return { url: normalizeUrl(x.href).href, rec: x }
+            if ( x.src ) return { url: normalizeUrl(x.src).src, rec: x }
+        } )
+        .sort()
+        .forEach( e => { if (e) refs.push({
+                            ref: e.rec?.href ?? e.rec?.src ?? e.rec?.rel ?? undefined
+                            , reftyp: e.rec?.href ? 'href' : e.rec?.src ? 'src' : e.rec?.rel ? 'rel' : undefined
+                            , nodeName: e.rec?.nodeName
+                            , type: e.rec?.type
+                            , nodeType: e.rec?.nodeType
+                            , nodeText: e.rec?.textContent
+                            , attributes: e.rec?.attributes
+                            , title: e.rec?.title
+                            , rel: e.rec?.rel
+                            })
+                        }
+        )
+        largeMap.set(doc.location.href, refs);
+    } catch (e) {
+        console.error( new Error(`Failure encountered during page mapping: ${e}`));
     }
-  });
+}
 
-
- /**
- * Callback-based approach: Version 4
- */
-  function loadScript(src, callback) {
-    let script = document.createElement('script');
-    script.src = src;
-  
-    script.onload = () => callback(null, script);
-    script.onerror = () => callback(new Error(`Script load error for ${src}`));
-  
-    document.head.append(script);
-  }
-  loadScript('path/script.js', (err, script) => {...})
-
-
-/**
- * Promise-based approach v1
- */
-function loadScript(src) {
+let pArr = [];
+function loadPage(url) {
     return new Promise(function(resolve, reject) {
-      let script = document.createElement('script');
-      script.src = src;
-  
-      script.onload = () => resolve(script); // resolve(ifr)
-      script.onerror = () => reject(new Error(`Script load error for ${src}`));
-  
-      document.head.append(script); 
+        let len = 0;
+        ifr.src = url;
+        ifr.onload = () => {
+            len = mapPage(ifr.contentDocument);
+            resolve(len);
+        }
     });
   }
-
-let promise = loadScript("https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.11/lodash.js"); // loadPage(page);
-
-promise.then(
-  script => alert(`${script.src} is loaded!`),
-  error => alert(`Error: ${error.message}`)
-); // promise.then( p => crawlPage(p) )
-
-promise.then(script => alert('Another handler...'));
- // promise.then( mapOrArrayOfLinks => updateMap(mapOrArrayOfLinks) )
-
-
-
-
-/**
- * Promise-based approach v2
- */
-let loadScriptPromise = function(src) {
-    return new Promise((resolve, reject) => {
-      loadScript(src, (err, script) => {
-        if (err) reject(err);
-        else resolve(script);
-      });
-    });
-  };
-
-  // usage:
-loadScriptPromise('path/script.js').then(...)
-
-
-
-// Promise-factory type approach
-let promiseFactory = [fn1, fn2, fn3]; // These dudes return a Promise
-promiseFactory.reduce((prevPromise, nextFn) => prevPromise.then(nextFn), Promise.resolve()).then(result => console.log(`Executed in sequence. Feel like James Bond yet?`));
-
-async function marchOneByOne(index, tasks) {
-  if (index >= tasks.length) {
-    return Promise.resolve(); // Hey, where did everyone go?
-  }
-  return tasks[index]().then(() => marchOneByOne(index + 1, tasks)); // Cool. Now, let's get the next one going.
+function returnNextTarget(m){
+    for ( let [ x, y ] of m.entries() ) if ( y === 0 ) return x;
+    return 0;
 }
 
-// Let's begin the march!
-marchOneByOne(0, promiseFactory)
-  .then(() => console.log("Finished marching. Time for ice cream!"));
+(async () => { 
+    let u;
+    mapPage(document);
+    if ( !m.size ) m.set(hr, 0);
+    while ( (u = returnNextTarget(m)) && u ) pArr.push ( await loadPage(u) )
+})();
 
-/* Example of "Promise Factory" with LoadPage */
-let promiseFactory = [fn1, fn2, fn3]; // These dudes return a Promise
+[...largeMap.entries()].forEach(e=>e[1].forEach(a=>console.log(e[0],a.reftyp, a.ref)));
+
+let linkSet = new Set();
+[...largeMap.entries()].forEach(e=>e[1].forEach(a=>linkSet.add(a.ref)));
+// finally read linkSet into nodejs, fetch all, and report refs not returning with 200 OK
 
 
+// mapPage('anchors','all')
+/*
+    let nlArr = [];
+    page = {
+        url
+        mapped
+        linkAttribute : 'href' 'src'
+        [ linksFrom ]
+        [ linksTo ]
+        title
+        elementTextContent
+        parentElement
+        elementType
+        nodeType
+        nodeName
+        nodeValue
+        attributes
+    }
+    ${page}.url.linksFrom.push(nl.filter(url => url === ${page} ).url);
+    nlArr.push(...[...doc.querySelectorAll('a')].map(a=>a.href));
+    allLinks.set({doc.location, 1, . . . . })
+
+*/
