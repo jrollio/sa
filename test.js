@@ -9,9 +9,8 @@ const pn = document.location.pathname;
 const nl = document.querySelectorAll('[href],[src]');
 const ifr = document.body.appendChild(document.createElement('iframe'));
 const ifrs = document.body.appendChild(document.createElement('iframe'));
-const m = new Map();
-const allLinksSet = new Set().add(document.location.href);
-
+const m = new Map().set(document.location.href, 0);
+const largeMap = new Map().set(document.location.href);
 
 function normalizeUrl(url){
     if ( typeof url === 'object' && url.href ) return url;
@@ -78,11 +77,11 @@ function addAllLinks(doc){
         [...doc.querySelectorAll(`[href],[src]`)]
         .flat(Infinity)
         .map( x => {
-            if ( x.href ) return normalizeUrl(x.href).href
-            if ( x.src ) return normalizeUrl(x.src).src
+            if ( x.href ) return { url: normalizeUrl(x.href).href, rec: x }
+            if ( x.src ) return { url: normalizeUrl(x.src).src, rec: x }
         } )
         .sort()
-        .forEach( e => { if (e) allLinksSet.add(e) } );
+        .forEach( e => { if (e) largeMap.set(e.url, { nodeName: e.rec.nodeName, nodeType: e.rec.nodeType } ) } );
     } catch (e) {
         console.error( new Error(`Failure encountered during page mapping: ${e}`));
     }
