@@ -55,6 +55,9 @@ if (window.Worker) {
   // nodejs:
   result = await fetch('https://people.com/tennis-champion-nick-kyrgios-self-harm-suicidal-thoughts-8414307').then(r=>r).then(r=>console.log(r, r.headers, r.statusText, r.status));
 
+at = document.querySelectorAll('a');
+  at.forEach(e=>console.log(e.closest('*:lang(EN)').textContent,e.textContent))
+
 // HTMLAnchorElement.prototype:
   Index	Value
 ATTRIBUTE_NODE	2

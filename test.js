@@ -10,7 +10,8 @@ const nl = document.querySelectorAll('[href],[src]');
 const ifr = document.body.appendChild(document.createElement('iframe'));
 const ifrs = document.body.appendChild(document.createElement('iframe'));
 const m = new Map().set(document.location.href, 0);
-const largeMap = new Map().set(document.location.href);
+// const largeMap = new Map().set(document.location.href);
+const largeMap = new Map();
 
 function normalizeUrl(url){
     if ( typeof url === 'object' && url.href ) return url;
@@ -72,6 +73,9 @@ function mapPage(doc){
 }
 
 function addAllLinks(doc){
+    let linksFrom = [];
+    let linksTo = [];
+    let refs = [];
     
     try {
         [...doc.querySelectorAll(`[href],[src]`)]
@@ -81,7 +85,20 @@ function addAllLinks(doc){
             if ( x.src ) return { url: normalizeUrl(x.src).src, rec: x }
         } )
         .sort()
-        .forEach( e => { if (e) largeMap.set(e.url, { nodeName: e.rec.nodeName, nodeType: e.rec.nodeType } ) } );
+        .forEach( e => { if (e) refs.push({
+                            ref: e.rec?.href ?? e.rec?.src ?? e.rec?.rel ?? undefined
+                            , reftyp: e.rec?.href ? 'href' : e.rec?.src ? 'src' : e.rec?.rel ? 'rel' : undefined
+                            , nodeName: e.rec?.nodeName
+                            , type: e.rec?.type
+                            , nodeType: e.rec?.nodeType
+                            , nodeText: e.rec?.textContent
+                            , attributes: e.rec?.attributes
+                            , title: e.rec?.title
+                            , rel: e.rec?.rel
+                            })
+                        }
+        )
+        largeMap.set(doc.location.href, refs);
     } catch (e) {
         console.error( new Error(`Failure encountered during page mapping: ${e}`));
     }
@@ -109,6 +126,13 @@ function returnNextTarget(m){
     if ( !m.size ) m.set(hr, 0);
     while ( (u = returnNextTarget(m)) && u ) pArr.push ( await loadPage(u) )
 })();
+
+[...largeMap.entries()].forEach(e=>e[1].forEach(a=>console.log(e[0],a.reftyp, a.ref)));
+
+let linkSet = new Set();
+[...largeMap.entries()].forEach(e=>e[1].forEach(a=>linkSet.add(a.ref)));
+// finally read linkSet into nodejs, fetch all, and report refs not returning with 200 OK
+
 
 // mapPage('anchors','all')
 /*
