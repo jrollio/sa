@@ -1,0 +1,23 @@
+{
+  "name": "server",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "",
+  "main": "linksrv.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "run": "node server",
+    "watch": "nodemon",
+    "seed": "node config/seeds.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/mongodb": "^8.0.0",
+    "avvio": "^8.3.0",
+    "fastify": "^4.26.2",
+    "fastify-plugin": "^4.5.1",
+    "nodemon": "^3.1.0"
+  }
+}

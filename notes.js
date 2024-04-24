@@ -64,3 +64,150 @@ loadPage('https://austinsportsbehavioralhealth.com/counseling-services/')
     .then(r=>alert(r.contentDocument.querySelectorAll('a').length));
 // ------------------------------------------ //
 
+
+/ Examples Section
+
+/**
+ * Callback-based approach: Version 1
+ */
+                /* srcarg *//* cbfarg */
+function loadScript(src, callback) {
+    let script = document.createElement('script');
+    script.src = src;
+                       /* cbf *//* cbearg *//* cbsarg */
+    script.onload = () => callback(null, script);
+
+                           /* cbf *//* cbearg */
+    script.onerror = () => callback(new Error(`Script load error for ${src}`));
+  
+    document.head.append(script);
+  }
+
+            /* scriptarg *//* callbackarg-inlinefunction */
+  loadScript('/my/script.js', function() {
+    // the callback runs after the script is loaded
+    newFunction(); // so now it works
+    ...
+  });
+
+
+/**
+ * Callback-based approach: Version 2
+ */
+  function loadScript(src, callback) {
+    let script = document.createElement('script');
+    script.src = src;
+    script.onload = () => callback(script);
+    document.head.append(script);
+  }
+  
+  loadScript('https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.2.0/lodash.js', script => {
+    alert(`Cool, the script ${script.src} is loaded`);
+    alert( _ ); // _ is a function declared in the loaded script
+  });
+
+  for page in list 
+    loadPage(page, crawlPage)
+
+/**
+ * Callback-based approach: Version 3
+ */
+                    /* src *//* cbf */
+  function loadScript(src, callback) {
+    let script = document.createElement('script');
+    script.src = src;
+  
+    script.onload = () => callback(null, script);
+    script.onerror = () => callback(new Error(`Script load error for ${src}`));
+  
+    document.head.append(script);
+  }
+                /* src */        /* cbf */   /* cbs */
+  loadScript('/my/script.js', function(error, script) {
+    if (error) {
+      // handle error
+    } else {
+      // script loaded successfully
+    }
+  });
+
+
+ /**
+ * Callback-based approach: Version 4
+ */
+  function loadScript(src, callback) {
+    let script = document.createElement('script');
+    script.src = src;
+  
+    script.onload = () => callback(null, script);
+    script.onerror = () => callback(new Error(`Script load error for ${src}`));
+  
+    document.head.append(script);
+  }
+  loadScript('path/script.js', (err, script) => {...})
+
+
+/**
+ * Promise-based approach v1
+ */
+function loadScript(src) {
+    return new Promise(function(resolve, reject) {
+      let script = document.createElement('script');
+      script.src = src;
+  
+      script.onload = () => resolve(script); // resolve(ifr)
+      script.onerror = () => reject(new Error(`Script load error for ${src}`));
+  
+      document.head.append(script); 
+    });
+  }
+
+let promise = loadScript("https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.11/lodash.js"); // loadPage(page);
+
+promise.then(
+  script => alert(`${script.src} is loaded!`),
+  error => alert(`Error: ${error.message}`)
+); // promise.then( p => crawlPage(p) )
+
+promise.then(script => alert('Another handler...'));
+ // promise.then( mapOrArrayOfLinks => updateMap(mapOrArrayOfLinks) )
+
+
+
+
+/**
+ * Promise-based approach v2
+ */
+let loadScriptPromise = function(src) {
+    return new Promise((resolve, reject) => {
+      loadScript(src, (err, script) => {
+        if (err) reject(err);
+        else resolve(script);
+      });
+    });
+  };
+
+  // usage:
+loadScriptPromise('path/script.js').then(...)
+
+
+
+// Promise-factory type approach
+let promiseFactory = [fn1, fn2, fn3]; // These dudes return a Promise
+promiseFactory.reduce((prevPromise, nextFn) => prevPromise.then(nextFn), Promise.resolve()).then(result => console.log(`Executed in sequence. Feel like James Bond yet?`));
+
+async function marchOneByOne(index, tasks) {
+  if (index >= tasks.length) {
+    return Promise.resolve(); // Hey, where did everyone go?
+  }
+  return tasks[index]().then(() => marchOneByOne(index + 1, tasks)); // Cool. Now, let's get the next one going.
+}
+
+// Let's begin the march!
+marchOneByOne(0, promiseFactory)
+  .then(() => console.log("Finished marching. Time for ice cream!"));
+
+/* Example of "Promise Factory" with LoadPage */
+let promiseFactory = [fn1, fn2, fn3]; // These dudes return a Promise
+
+
