@@ -6,6 +6,7 @@
 foreach ($link in $(get-content -path .\links.txt)) { Write-Host $(invoke-webrequest -method HEAD $link | Select-object StatusCode, StatusDescription) $link }
  background usage / details in invoke-webrequest and invoke-restmethod:
 https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/invoke-restmethod?view=powershell-7.4
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/invoke-webrequest?view=powershell-5.1&WT.mc_id=ps-gethelp
 
 
  */
