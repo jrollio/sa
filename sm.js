@@ -1,3 +1,14 @@
+/**
+ * Purpose: produce site map for given website and identify dead links referenced in each page of sitemap
+ * Run by loading into browser through line 137, then run lines 138 - 142 and process output urls as input links in powershell:
+ * c:\> foreach ($link in $(get-content -path .\links.txt)) { Write-Host $(invoke-webrequest $link | Select-object StatusCode, StatusDescription) $link }
+
+foreach ($link in $(get-content -path .\links.txt)) { Write-Host $(invoke-webrequest -method HEAD $link | Select-object StatusCode, StatusDescription) $link }
+ background usage / details in invoke-webrequest and invoke-restmethod:
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/invoke-restmethod?view=powershell-7.4
+
+
+ */
 const loc = document.location.host.toLowerCase().split('.');
 const tld = loc[loc.length-1];
 const hn = loc[loc.length-2] + '.' + tld;

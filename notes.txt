@@ -211,3 +211,14 @@ marchOneByOne(0, promiseFactory)
 let promiseFactory = [fn1, fn2, fn3]; // These dudes return a Promise
 
 
+foreach ($link in $(get-content -path .\links.txt)) { Write-Host $link }
+
+foreach ($link in $(get-content -path .\links.txt)) { Write-Host $(invoke-webrequest $link).Status $(invoke-webrequest $link).StatusText $link }
+
+
+foreach ($link in $(get-content -path .\links.txt)) { Write-Host $(invoke-webrequest $link | Select-object StatusCode, StatusDescription) $link }
+
+foreach ($link in $(get-content -path .\links.txt)) { Write-Host $(invoke-webrequest -method HEAD $link | Select-object StatusCode, StatusDescription) $link }
+
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/invoke-restmethod?view=powershell-7.4
+
